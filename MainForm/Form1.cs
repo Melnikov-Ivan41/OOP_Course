@@ -2,6 +2,7 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Diagnostics;
+using System.IO;
 using CourseWorkSort; // Підключення простору імен, в якому знаходяться класи ArrayGenerator і SortingManager
 
 namespace MainForm
@@ -60,6 +61,8 @@ namespace MainForm
 
                 lblStatus.Text = $"Array of {size} elements generated and saved!";
                 txtOutput.Clear(); // Очищення вікна виводу
+                lblComplexity.Text = "Theoretical Complexity: N/A";
+                lblMetrics.Text = "Metrics: N/A";
             }
             catch (Exception ex)
             {
@@ -67,7 +70,6 @@ namespace MainForm
                 lblStatus.Text = $"Error: {ex.Message}";
             }
         }
-
 
         private void PrintArray()
         {
@@ -89,15 +91,34 @@ namespace MainForm
                     var order = rbAscending.Checked ? ArrSortOrder.Ascending : ArrSortOrder.Descending;
 
                     stopwatch.Restart(); // Початок відліку часу
-                    sorter.PerformSort(algorithmId, currentArray, order); // Виклик сортування
+
+                    // Виклик сортування і отримання метрик
+                    SortMetrics metrics = sorter.PerformSort(algorithmId, currentArray, order);
+
                     stopwatch.Stop(); // Завершення таймера
 
                     // Виведення часу сортування
                     lblTime.Text = $"Time: {stopwatch.Elapsed.TotalMilliseconds:F3} ms";
+
+                    // Виведення теоретичної складності
+                    lblComplexity.Text = $"Theoretical Complexity: {metrics.TheoreticalComplexity}";
+
+                    // Виведення метрик
+                    string metricsText = $"Comparisons: {metrics.Comparisons}, Swaps: {metrics.Swaps}, Assignments: {metrics.Assignments}";
+                    if (!string.IsNullOrEmpty(metrics.AdditionalInfo))
+                    {
+                        metricsText += $", {metrics.AdditionalInfo}";
+                    }
+                    lblMetrics.Text = metricsText;
+
                     lblStatus.Text = $"Array sorted using {GetAlgorithmName(algorithmId)}!";
 
-                    // Збереження відсортованого масиву у файл
-                    string resultText = $"Sorted by {GetAlgorithmName(algorithmId)}: {string.Join(", ", currentArray)}";
+                    // Збереження відсортованого масиву та метрик у файл
+                    string resultText = $"Sorted by {GetAlgorithmName(algorithmId)}:\n" +
+                                       $"Theoretical Complexity: {metrics.TheoreticalComplexity}\n" +
+                                       $"Metrics: {metricsText}\n" +
+                                       $"Time: {stopwatch.Elapsed.TotalMilliseconds:F3} ms\n\n" +
+                                       $"Array: {string.Join(", ", currentArray)}";
                     File.WriteAllText("result.txt", resultText);
 
                     // Оновлення статусу про збереження результату
@@ -109,7 +130,6 @@ namespace MainForm
                 }
             }
         }
-
 
         private string GetAlgorithmName(int algorithmId)
         {

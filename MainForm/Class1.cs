@@ -8,6 +8,16 @@ namespace CourseWorkSort
         Descending = 2   // Сортування за спаданням
     }
 
+    // Клас для зберігання метрик сортування
+    public class SortMetrics
+    {
+        public int Comparisons { get; set; } = 0;     // Кількість порівнянь
+        public int Swaps { get; set; } = 0;           // Кількість перестановок
+        public int Assignments { get; set; } = 0;     // Кількість присвоєнь
+        public string TheoreticalComplexity { get; set; } = ""; // Теоретична складність
+        public string AdditionalInfo { get; set; } = "";        // Додаткова інформація
+    }
+
     // Клас для генерації випадкових масивів
     public class ArrayGenerator
     {
@@ -32,21 +42,30 @@ namespace CourseWorkSort
     // Інтерфейс, який реалізують усі алгоритми сортування
     public interface ISortAlgorithm
     {
-        void Sort(int[] array, ArrSortOrder order); // Метод сортування
+        // Метод сортування, який повертає метрики
+        SortMetrics Sort(int[] array, ArrSortOrder order);
+
+        // Метод для отримання теоретичної складності алгоритму
+        string GetTheoreticalComplexity();
     }
 
     // Клас сортування методом "Bucket Sort"
     public class BucketSort : ISortAlgorithm
     {
-        public void Sort(int[] array, ArrSortOrder order)
+        public SortMetrics Sort(int[] array, ArrSortOrder order)
         {
+            // Створюємо об'єкт для збору метрик
+            SortMetrics metrics = new SortMetrics();
+            metrics.TheoreticalComplexity = GetTheoreticalComplexity();
+
             // Перевірка на null або на малий розмір
             if (array == null || array.Length <= 1)
-                return;
+                return metrics;
 
             // Знаходження максимального та мінімального значень
             int maxValue = array.Max();
             int minValue = array.Min();
+            metrics.Comparisons += array.Length * 2; // Порівняння для знаходження max і min
 
             // Створення "відер" (bucket'ів) для кожного можливого значення
             List<int>[] buckets = new List<int>[maxValue - minValue + 1];
@@ -60,6 +79,7 @@ namespace CourseWorkSort
             foreach (int item in array)
             {
                 buckets[item - minValue].Add(item);
+                metrics.Assignments++; // Присвоєння при додаванні в bucket
             }
 
             // Збирання елементів назад у масив у вказаному порядку
@@ -71,6 +91,7 @@ namespace CourseWorkSort
                     foreach (var item in bucket)
                     {
                         array[index++] = item;
+                        metrics.Assignments++; // Присвоєння при поверненні в масив
                     }
                 }
             }
@@ -81,26 +102,42 @@ namespace CourseWorkSort
                     foreach (var item in buckets[i])
                     {
                         array[index++] = item;
+                        metrics.Assignments++; // Присвоєння при поверненні в масив
                     }
                 }
             }
+
+            metrics.AdditionalInfo = $"Кількість відер (buckets): {buckets.Length}";
+            return metrics;
+        }
+
+        public string GetTheoreticalComplexity()
+        {
+            return "O(n + k), де n - розмір масиву, k - діапазон значень";
         }
     }
 
     // Клас сортування методом "Counting Sort"
     public class CountingSort : ISortAlgorithm
     {
-        public void Sort(int[] array, ArrSortOrder order)
+        public SortMetrics Sort(int[] array, ArrSortOrder order)
         {
+            // Створюємо об'єкт для збору метрик
+            SortMetrics metrics = new SortMetrics();
+            metrics.TheoreticalComplexity = GetTheoreticalComplexity();
+
             if (array == null || array.Length <= 1)
-                return;
+                return metrics;
 
             int max = array.Max(); // Найбільше значення в масиві
+            metrics.Comparisons += array.Length; // Порівняння для знаходження max
+
             int[] count = new int[max + 1]; // Масив лічильників
 
             foreach (int item in array)
             {
                 count[item]++; // Підрахунок кількості кожного числа
+                metrics.Assignments++; // Збільшення лічильника
             }
 
             int currentIndex = 0;
@@ -111,7 +148,9 @@ namespace CourseWorkSort
                     while (count[i] > 0)
                     {
                         array[currentIndex++] = i;
+                        metrics.Assignments++; // Присвоєння при поверненні в масив
                         count[i]--;
+                        metrics.Assignments++; // Зменшення лічильника
                     }
                 }
             }
@@ -122,32 +161,58 @@ namespace CourseWorkSort
                     while (count[i] > 0)
                     {
                         array[currentIndex++] = i;
+                        metrics.Assignments++; // Присвоєння при поверненні в масив
                         count[i]--;
+                        metrics.Assignments++; // Зменшення лічильника
                     }
                 }
             }
+
+            metrics.AdditionalInfo = $"Розмір масиву лічильників: {count.Length}";
+            return metrics;
+        }
+
+        public string GetTheoreticalComplexity()
+        {
+            return "O(n + k), де n - розмір масиву, k - максимальне значення в масиві";
         }
     }
 
     // Клас сортування методом "Radix Sort"
     public class RadixSort : ISortAlgorithm
     {
-        public void Sort(int[] array, ArrSortOrder order)
+        public SortMetrics Sort(int[] array, ArrSortOrder order)
         {
+            // Створюємо об'єкт для збору метрик
+            SortMetrics metrics = new SortMetrics();
+            metrics.TheoreticalComplexity = GetTheoreticalComplexity();
+
             if (array == null || array.Length <= 1)
-                return;
+                return metrics;
 
             int max = array.Max(); // Знаходимо найбільше число для визначення кількості розрядів
+            metrics.Comparisons += array.Length; // Порівняння для знаходження max
+
+            int digitCount = 0;
+            int temp = max;
+            while (temp > 0)
+            {
+                digitCount++;
+                temp /= 10;
+            }
 
             // Проходимо по кожному розряду (одиниці, десятки, сотні, ...)
             for (int exp = 1; max / exp > 0; exp *= 10)
             {
-                CountingSortByDigit(array, exp, order);
+                metrics = CountingSortByDigit(array, exp, order, metrics);
             }
+
+            metrics.AdditionalInfo = $"Кількість розрядів: {digitCount}";
+            return metrics;
         }
 
         // Допоміжний метод — сортування за окремим розрядом
-        private void CountingSortByDigit(int[] array, int exp, ArrSortOrder order)
+        private SortMetrics CountingSortByDigit(int[] array, int exp, ArrSortOrder order, SortMetrics metrics)
         {
             int[] output = new int[array.Length];
             int[] count = new int[10]; // 10 можливих цифр (0-9)
@@ -155,6 +220,7 @@ namespace CourseWorkSort
             foreach (int item in array)
             {
                 count[(item / exp) % 10]++;
+                metrics.Assignments++; // Збільшення лічильника
             }
 
             if (order == ArrSortOrder.Ascending)
@@ -162,6 +228,7 @@ namespace CourseWorkSort
                 for (int i = 1; i < 10; i++)
                 {
                     count[i] += count[i - 1];
+                    metrics.Assignments++; // Присвоєння при обчисленні префіксної суми
                 }
             }
             else
@@ -169,26 +236,41 @@ namespace CourseWorkSort
                 for (int i = 8; i >= 0; i--)
                 {
                     count[i] += count[i + 1];
+                    metrics.Assignments++; // Присвоєння при обчисленні префіксної суми
                 }
             }
 
             for (int i = array.Length - 1; i >= 0; i--)
             {
                 output[count[(array[i] / exp) % 10] - 1] = array[i];
+                metrics.Assignments++; // Присвоєння при розміщенні в вихідний масив
                 count[(array[i] / exp) % 10]--;
+                metrics.Assignments++; // Зменшення лічильника
             }
 
             Array.Copy(output, array, array.Length);
+            metrics.Assignments += array.Length; // Присвоєння при копіюванні назад у вхідний масив
+
+            return metrics;
+        }
+
+        public string GetTheoreticalComplexity()
+        {
+            return "O(d * (n + k)), де n - розмір масиву, k - діапазон цифр (10), d - кількість розрядів";
         }
     }
 
     // Клас сортування методом "Flash Sort"
     public class FlashSort : ISortAlgorithm
     {
-        public void Sort(int[] array, ArrSortOrder order)
+        public SortMetrics Sort(int[] array, ArrSortOrder order)
         {
+            // Створюємо об'єкт для збору метрик
+            SortMetrics metrics = new SortMetrics();
+            metrics.TheoreticalComplexity = GetTheoreticalComplexity();
+
             if (array == null || array.Length <= 1)
-                return;
+                return metrics;
 
             int n = array.Length;
             int m = (int)(0.45 * n); // Кількість класів (груп), приблизно 45% від розміру
@@ -196,8 +278,9 @@ namespace CourseWorkSort
 
             int min = array.Min();
             int max = array.Max();
+            metrics.Comparisons += n * 2; // Порівняння для знаходження min і max
 
-            if (min == max) return;
+            if (min == max) return metrics;
 
             double c = (double)(m - 1) / (max - min); // Співвідношення для обчислення індексу класу
 
@@ -206,12 +289,14 @@ namespace CourseWorkSort
             {
                 int k = (int)(c * (array[i] - min));
                 l[k]++;
+                metrics.Assignments++; // Збільшення лічильника
             }
 
             // Крок 2: Префіксна сума для визначення меж класів
             for (int i = 1; i < m; i++)
             {
                 l[i] += l[i - 1];
+                metrics.Assignments++; // Присвоєння при обчисленні префіксної суми
             }
 
             int move = 0;
@@ -226,9 +311,11 @@ namespace CourseWorkSort
                 {
                     j++;
                     k1 = (int)(c * (array[j] - min));
+                    metrics.Comparisons++; // Порівняння в циклі
                 }
 
                 flash = array[j];
+                metrics.Assignments++; // Присвоєння flash
 
                 while (j != l[k1])
                 {
@@ -237,20 +324,35 @@ namespace CourseWorkSort
                     array[l[k1]] = flash;
                     flash = hold;
                     move++;
+                    metrics.Swaps++; // Перестановка елементів
+                    metrics.Assignments += 3; // Присвоєння hold, array[l[k1]] і flash
+                    metrics.Comparisons++; // Порівняння в циклі
                 }
             }
 
             // Крок 4: Завершальне сортування вставками
-            InsertionSort(array, order);
+            metrics = InsertionSort(array, order, metrics);
+
+            metrics.AdditionalInfo = $"Кількість класів (m): {m}, Кількість переміщень: {move}";
+
+            // Якщо порядок спадання, інвертуємо масив
+            if (order == ArrSortOrder.Descending)
+            {
+                Array.Reverse(array);
+                metrics.Assignments += n / 2; // Приблизна кількість операцій при реверсі
+            }
+
+            return metrics;
         }
 
         // Метод сортування вставками (на завершення FlashSort)
-        private void InsertionSort(int[] array, ArrSortOrder order)
+        private SortMetrics InsertionSort(int[] array, ArrSortOrder order, SortMetrics metrics)
         {
             for (int i = 1; i < array.Length; i++)
             {
                 int key = array[i];
                 int j = i - 1;
+                metrics.Assignments++; // Присвоєння key
 
                 if (order == ArrSortOrder.Ascending)
                 {
@@ -258,6 +360,9 @@ namespace CourseWorkSort
                     {
                         array[j + 1] = array[j];
                         j--;
+                        metrics.Comparisons++; // Порівняння в циклі
+                        metrics.Assignments++; // Присвоєння array[j+1]
+                        metrics.Swaps++; // Перестановка елементів
                     }
                 }
                 else
@@ -266,11 +371,22 @@ namespace CourseWorkSort
                     {
                         array[j + 1] = array[j];
                         j--;
+                        metrics.Comparisons++; // Порівняння в циклі
+                        metrics.Assignments++; // Присвоєння array[j+1]
+                        metrics.Swaps++; // Перестановка елементів
                     }
                 }
 
                 array[j + 1] = key;
+                metrics.Assignments++; // Присвоєння array[j+1]
             }
+
+            return metrics;
+        }
+
+        public string GetTheoreticalComplexity()
+        {
+            return "O(n) в середньому, O(n²) в гіршому випадку";
         }
     }
 
@@ -291,13 +407,14 @@ namespace CourseWorkSort
             };
         }
 
-        // Метод виконує сортування відповідно до вибраного алгоритму
-        public void PerformSort(int choice, int[] array, ArrSortOrder order)
+        // Метод виконує сортування відповідно до вибраного алгоритму і повертає метрики
+        public SortMetrics PerformSort(int choice, int[] array, ArrSortOrder order)
         {
             if (_sortAlgorithms.TryGetValue(choice, out var algorithm))
             {
-                algorithm.Sort(array, order); // Виклик відповідного методу сортування
+                SortMetrics metrics = algorithm.Sort(array, order); // Виклик відповідного методу сортування
                 Console.WriteLine($"Array sorted using {algorithm.GetType().Name}!");
+                return metrics;
             }
             else
             {
@@ -305,8 +422,6 @@ namespace CourseWorkSort
             }
         }
     }
-
-
 }
 
 

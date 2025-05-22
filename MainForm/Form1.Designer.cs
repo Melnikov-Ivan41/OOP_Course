@@ -5,6 +5,8 @@
         private Label lblSize;
         private Label lblMin;
         private Label lblMax;
+        private Label lblComplexity;
+        private Label lblMetrics;
         /// <summary>
         ///  Required designer variable.
         /// </summary>
@@ -49,6 +51,8 @@
             lblMin = new Label();
             lblMax = new Label();
             lblFileSaved = new Label();
+            lblComplexity = new Label();
+            lblMetrics = new Label();
             ((System.ComponentModel.ISupportInitialize)numSize).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numMin).BeginInit();
             ((System.ComponentModel.ISupportInitialize)numMax).BeginInit();
@@ -238,11 +242,31 @@
             lblFileSaved.Size = new Size(0, 15);
             lblFileSaved.TabIndex = 13;
             // 
+            // lblComplexity
+            // 
+            lblComplexity.AutoSize = true;
+            lblComplexity.Location = new Point(18, 432);
+            lblComplexity.Name = "lblComplexity";
+            lblComplexity.Size = new Size(155, 15);
+            lblComplexity.TabIndex = 16;
+            lblComplexity.Text = "Theoretical Complexity: N/A";
+            // 
+            // lblMetrics
+            // 
+            lblMetrics.AutoSize = true;
+            lblMetrics.Location = new Point(18, 447);
+            lblMetrics.Name = "lblMetrics";
+            lblMetrics.Size = new Size(70, 15);
+            lblMetrics.TabIndex = 17;
+            lblMetrics.Text = "Metrics: N/A";
+            // 
             // Form1
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(693, 446);
+            ClientSize = new Size(693, 470);
+            Controls.Add(lblMetrics);
+            Controls.Add(lblComplexity);
             Controls.Add(lblTime);
             Controls.Add(lblStatus);
             Controls.Add(lblFileSaved);
